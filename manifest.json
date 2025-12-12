@@ -3,22 +3,33 @@
   "name": "Malicious Tab Detector",
   "version": "1.0",
   "description": "Detects malicious browser behavior using an AI model (TensorFlow.js).",
+
   "permissions": [
     "tabs",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "webNavigation",
+    "storage"
   ],
+
   "background": {
     "service_worker": "background.js"
   },
+
   "action": {
     "default_popup": "popup.html",
     "default_title": "Malicious Tab Detector"
   },
+
   "web_accessible_resources": [
     {
-      "resources": ["tfjs_model/*"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "tf/tf.min.js",
+        "tfjs_model/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
