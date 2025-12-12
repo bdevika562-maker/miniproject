@@ -1,30 +1,71 @@
+// Load TensorFlow.js
+importScripts("tf/tf.min.js");
+
+// Load tab monitoring script (your custom file)
 importScripts("tabs_monitor.js");
 
-// Global model
+console.log("Background service worker started.");
+
+// Global model reference
 let model = null;
 
+// Load the AI model
 async function loadModel() {
-    if (!model) {
-        model = await tf.loadLayersModel(chrome.runtime.getURL("tfjs_model/model.json"));
-        console.log("Model loaded.");
+    try {
+        if (!model) {
+            console.log("Loading model...");
+            model = await tf.loadLayersModel(
+                chrome.runtime.getURL("tfjs_model/model.json")
+            );
+            console.log("Model successfully loaded:", model);
+        }
+    } catch (err) {
+        console.error("Error loading model:", err);
     }
 }
 
-chrome.runtime.onInstalled.addListener(loadModel);
-chrome.runtime.onStartup.addListener(loadModel);
+// Chrome startup events
+chrome.runtime.onInstalled.addListener(() => {
+    console.log("Extension installed. Loading model...");
+    loadModel();
+});
 
-// Handle popup scan request
-chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
+chrome.runtime.onStartup.addListener(() => {
+    console.log("Browser startup. Loading model...");
+    loadModel();
+});
+
+// Simulated feature extraction function (placeholder)
+async function simulateFeatureExtraction() {
+    // Example: return dummy 10-feature input
+    return Array(10).fill(0).map(() => Math.random());
+}
+
+// Listener for popup scan requests
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.action === "scan_tab") {
-        await loadModel();
+        console.log("Popup requested scan.");
 
-        const features = await simulateFeatureExtraction();
-        const input = tf.tensor([features]);
+        (async () => {
+            await loadModel();
 
-        const prediction = (await model.predict(input).data())[0];
-        const malicious = prediction > 0.5;
+            console.log("Extracting features...");
+            const features = await simulateFeatureExtraction();
+            console.log("Features:", features);
 
-        sendResponse({ malicious });
-        return true;
+            const input = tf.tensor([features]);
+
+            console.log("Running prediction...");
+            const predictionArray = await model.predict(input).data();
+            const prediction = predictionArray[0];
+
+            console.log("Prediction score:", prediction);
+
+            const malicious = prediction > 0.5;
+
+            sendResponse({ malicious });
+        })();
+
+        return true; // keep message channel open
     }
 });
